@@ -2,6 +2,8 @@
 
 ## A faire : 
 
+Créer un nouveau module : moderator.py
+
 Créer une classe qui contient une liste de mots interdits.
 class Moderator:
 

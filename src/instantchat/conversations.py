@@ -1,15 +1,39 @@
-from typing import List
+from typing import List, override
 
-class Message:
-    """
-        - Identifier unique du message (int)
-        - Expéditeur / Autheur du message (str - User.username)
-        - Destinataire (str - User.username)
-        - Contenu du message (str)
-        Vous devez créer des propriété imuable
-    """
-    ...
+# AJouter un module pour gérer l'abstraction
+from abc import ABC, abstractmethod
+
+# Création d'une classe abstraite qui représente un message
+class AbstractMessage:
+    def __init__(self, content: str):
+        self._content: str = content # Visibilité PROTECTED
+    
+    # Définition d'une méthode abstraite.
+    # Possibilité de passer des paramètres nommés 
+    # inconnus à l'avance.
+    @abstractmethod
+    def handle(self, **kwargs) -> None: ...
+
+class SystemMessage(AbstractMessage):
+    def __init__(self, content: str):
+        # Appelle statique
+        # AbstractMessage.__init__(self, content)
+        super().__init__(content)
+    
+    @override
+    def handle(self, **kwargs) -> None:
+        CATEGORY = "category"
+        if CATEGORY in kwargs.keys():
+            print(kwargs[CATEGORY])
+        else:
+            print(f"{CATEGORY} is required.")
+
+
+
+
+class Message(AbstractMessage):
     def __init__(self, identifier: int, senser_username: str, destinataire_username: str, content: str):
+        super().__init__(content)
         self.__identifier: int = identifier
         self.__sender_username: str = senser_username
         self.__destinataire_username: str = destinataire_username

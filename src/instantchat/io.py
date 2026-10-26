@@ -23,7 +23,7 @@ class MarkMessageAsDeletedFeature(Protocol):
     @abstractmethod
     def mark_message_as_deleted(self, message: any): ...
 
-
+    
 class ClientMessenger(
     SendMessageFeature,
     ReceiveMessageFeature,
@@ -35,7 +35,7 @@ class ClientMessenger(
         self.__configuration: ApplicationConfiguration = configuration
      
     @override   
-    def send_message(self, message: any):
+    def send_message(self, message: any) -> int:
         print("Sending message to server...")
     
     @override   

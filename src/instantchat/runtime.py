@@ -2,36 +2,39 @@ from threading import Thread
 from time import sleep
 from typing import override
 from socket import socket as Socket, AF_INET, SOCK_STREAM
-
-import numpy as np
-import sounddevice as sd
+from json import loads, dumps
 
 from .config import ApplicationConfiguration
+from .conversations import Message
 
-class Metronome(Thread):
-    def __init__(self, interval_in_seconds: float):
+class ClientConnection(Thread):
+
+    all_users_connections: dict[str, Socket] = {}
+
+    def __init__(self, client_socket: Socket):
         Thread.__init__(self)
-        self.__interval: float = interval_in_seconds
-        self.__is_running: bool = False
+        self.__client_socket: Socket = client_socket
+        self.__is_running: bool = True
     
-    def beep(self, frequency: float, duration: float, volume: float = 0.5):
-        sample_frequency: float = 44_100
+    def run(self):
+        try:
+            username = self.__client_socket.recv(1024).decode()
+            ClientConnection.all_users_connections[username] = self.__client_socket
+            usernames = list(ClientConnection.all_users_connections.keys())
+            uns = ",".join(usernames)
+            self.__client_socket.send(uns.encode())
+            while  self.__is_running:
+                message_as_string =  self.__client_socket.recv(4096).decode()
+                message_as_dict = loads(message_as_string)
+                message_as_object: Message = Message(**message_as_dict)
+                destinataire_client_socket: Socket = ClientConnection.all_users_connections[
+                    message_as_object.destinataire_username
+                ]
+                destinataire_client_socket.send(message_as_string.encode())
+
+        except:
+            pass
         
-        t = np.linspace(0, duration, int(sample_frequency * duration), endpoint=False)
-        wave = volume * np.sin(2 * np.pi * frequency * t)
-        sd.play(wave, sample_frequency)
-        sd.wait()
-    
-    @override
-    def run(self) -> None:
-        if self.__is_running == False:
-            self.__is_running = True
-            while (self.__is_running):
-                self.beep(440, 0.5)
-                sleep(self.__interval)
-    
-    def terminate(self):
-        self.__is_running = False
 
 class Client(Thread):
     def __init__(self, server_config: ApplicationConfiguration) -> None:
@@ -89,7 +92,7 @@ class Server(Thread):
         self.__configuration: ApplicationConfiguration = configuration
         self.__is_running: bool = False
         self.__socket : Socket = None
-        self.clients_connection: list = []
+        self.__clients_connections: list = []
         
     def run(self):
         if not self.__is_running:
@@ -103,12 +106,17 @@ class Server(Thread):
                 self.__socket.listen(5)
                 while self.__is_running:
                     client, infos = self.__socket.accept()
+                    client_connection: ClientConnection(client)
+                    self.__clients_connections.append(client_connection)  
+                    client_connection.start()
                     
     def terminate(self):
         if self.__is_running:
             self.__is_running = False
         if self.__socket:
             try:
+                for client in self.__clients_connections:
+                    client.terminate()
                 self.__socket.close()
             except Exception as error:
                 print(f"Error closing server. Reason: {error}")

@@ -7,7 +7,10 @@ authors = [
     { name = "Nicolas Metivier", email = "nicolas.a.metivier@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "numpy>=2.5.4",
+    "sounddevice>=0.5.6",
+]
 
 [project.scripts]
 instantchat = "instantchat.main:main" # src/instantchat/main.py - main()

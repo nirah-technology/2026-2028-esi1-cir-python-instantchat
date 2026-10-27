@@ -1,17 +1,22 @@
 from .users import User
 from .conversations import Message
+from .runtime import Metronome
 
 
 def main():
-    username_choice: str = input("Choice your username: ")
-    me: User = User(username_choice)
+
+    metronome1 = Metronome(1, 400)
+    metronome2 = Metronome(0.5, 800)
+    metronome3 = Metronome(0.25, 1200)
     
-    message: Message = Message(
-        1,
-        content="Hello world!",
-        destinataire_username=me.get_username(), 
-        senser_username=me.get_username(), 
-    )
+    try:
+        metronome1.start()
+        metronome2.start()
+        metronome3.start()
+    except KeyboardInterrupt:
+        metronome1.terminate()
+        metronome2.terminate()
+        metronome3.terminate()
 
 if (__name__ == "__main__"):
     main()

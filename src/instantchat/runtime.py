@@ -83,3 +83,33 @@ class Client(Thread):
                         if received_data:
                             received_message = received_data.decode()
                             print(received_message)
+
+class Server(Thread):
+    def __init__(self, configuration: ApplicationConfiguration):
+        self.__configuration: ApplicationConfiguration = configuration
+        self.__is_running: bool = False
+        self.__socket : Socket = None
+        self.clients_connection: list = []
+        
+    def run(self):
+        if not self.__is_running:
+            self.__is_running = True
+            if self.__socket == None:
+                self.__socket = Socket(AF_INET, SOCK_STREAM)
+                self.__socket.bind((
+                    self.__configuration.bind_address,
+                    self.__configuration.listen_port
+                ))
+                self.__socket.listen(5)
+                while self.__is_running:
+                    client, infos = self.__socket.accept()
+                    
+    def terminate(self):
+        if self.__is_running:
+            self.__is_running = False
+        if self.__socket:
+            try:
+                self.__socket.close()
+            except Exception as error:
+                print(f"Error closing server. Reason: {error}")
+            self.__socket = None

@@ -1,7 +1,7 @@
 from threading import Thread
 from time import sleep
 from typing import override
-from socket import socket as Socket
+from socket import socket as Socket, AF_INET, SOCK_STREAM
 
 import numpy as np
 import sounddevice as sd
@@ -34,7 +34,52 @@ class Metronome(Thread):
         self.__is_running = False
 
 class Client(Thread):
-    def __init__(self) -> None:
+    def __init__(self, server_config: ApplicationConfiguration) -> None:
         Thread.__init__(self)
         self.__is_running: bool = False
+        self.__server_config: ApplicationConfiguration  = server_config
+        self.__socket: Socket = None
         
+    def connect(self):
+        if self.__socket is None:
+            self.__socket = Socket((AF_INET, SOCK_STREAM))
+            try:
+                self.__socket.connect((
+                    self.__server_config.bind_address,
+                    self.__server_config.listen_port
+                ))
+            except Exception as error:
+                print(f"Unable to connect to server. Reason: {error}")
+
+    def disconnect(self):
+        if self.__socket:
+            try:
+                self.__socket.close()
+            except Exception as error:
+                print(f"Unable to close connection. Reason: {error}")
+            self.__socket = None
+    
+    def send_message(self, message_to_send: str):
+        if self.__socket:
+            try:
+                self.__socket.send(message_to_send.encode())
+            except Exception as error:
+                print(f"Unable to send message. Reason: {error}")
+    
+    
+    def run(self):
+        if not self.__is_running:
+            self.__is_running = True
+            while self.__is_running:
+                if self.__socket:   
+                    try:
+                        self.__socket.settimeout(1)
+                        received_data: bytes = self.__socket.recv(4096)
+                    except TimeoutError:
+                        pass
+                    except Exception as error:
+                        print(f"Unable to retrieve data. Reason: {error}")
+                    else:
+                        if received_data:
+                            received_message = received_data.decode()
+                            print(received_message)

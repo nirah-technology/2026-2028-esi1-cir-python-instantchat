@@ -106,7 +106,7 @@ class Server(Thread):
                 self.__socket.listen(5)
                 while self.__is_running:
                     client, infos = self.__socket.accept()
-                    client_connection: ClientConnection(client)
+                    client_connection: ClientConnection = ClientConnection(client)
                     self.__clients_connections.append(client_connection)  
                     client_connection.start()
                     
